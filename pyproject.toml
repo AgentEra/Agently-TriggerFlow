@@ -1,0 +1,24 @@
+[project]
+name = "agently-triggerflow"
+version = "0.1.0-preview-20250130"
+description = "Agently TriggerFlow - Arrange GenAI Application Workflow Based On Event-Driven Triggers"
+authors = [
+    {name = "Agently Team",email = "developer@agently.tech>"},
+    {name = "maplemx", email = "<maplemx@gmail.com"}
+]
+repository = "https://github.com/AgentEra/Agently-TriggerFlow"
+homepage = "https://agently.tech"
+license = "Apache-2.0"
+readme = "README.md"
+documentation = "https://github.com/AgentEra/Agently-TriggerFlow/blob/main/README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "agently-stage (==0.2.0a1)"
+]
+keywords = ["agently", "workflow", "triggerflow", "event", "event-driven"]
+exclude = ["examples", "tests"]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
