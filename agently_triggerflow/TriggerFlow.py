@@ -23,8 +23,15 @@ from .TriggerFlowResult import TriggerFlowResult
 
 class TriggerFlow:
     CONTINUE_STOP = StopIteration
+    _name_counter = 0
 
-    def __init__(self):
+    def __init__(
+            self,
+            name=None,
+            max_workers=None,
+            exception_handler=None,
+            is_debug=False,
+        ):
         """
         Agently TriggerFlow create an trigger flow instance to manage event-driven tasks.
 
@@ -71,18 +78,28 @@ class TriggerFlow:
         )
         ```
         """
+        if name:
+            self.__name__ = f"TriggerFlow-{ name }"
+        else:
+            TriggerFlow._name_counter += 1
+            self.__name__ = f"TriggerFlow-{ TriggerFlow._name_counter }"
+        self._stage = Stage(
+            max_workers=max_workers,
+            exception_handler=exception_handler,
+        )
         self._dispatch = TriggerFlowDispatch(self)
         self.data = TriggerFlowRuntimeData(self)
         self._chunk_schemas = {}
         self._start_chunk = None
         self._id_counter = {}
         self.wait_all = self.wait_group
-        self.result = TriggerFlowResult()
+        self.result = TriggerFlowResult(name=f"Result:{ self.__name__ }")
         self.END = TriggerFlowTaskChunk(
             self,
             self._handle_end_chunk,
             name="END",
         )
+        self._is_debug = is_debug
     
     def _handle_end_chunk(self, trigger_data):
         if self.result._result is None:
@@ -253,14 +270,11 @@ class TriggerFlow:
         return self._stage.go(task, *args, **kwargs)
 
     def start(self, task=None, trigger_data=None):
-        #try:
-        if task is None and self._start_chunk is None:
-            raise ValueError("[Agently TriggerFlow] You must mark a start chunk using `triggerflow.mark_start()` or point to a chunk or a task using parameter `task`.")
-        start_chunk = self.chunk(task if task is not None else self._start_chunk)
-        Stage().go(start_chunk._execute, trigger_data)
-        return self.result.get()
-        """
+        try:
+            if task is None and self._start_chunk is None:
+                raise ValueError("[Agently TriggerFlow] You must mark a start chunk using `triggerflow.mark_start()` or point to a chunk or a task using parameter `task`.")
+            start_chunk = self.chunk(task if task is not None else self._start_chunk)
+            self._stage.get(start_chunk._execute, trigger_data)
+            return self.result
         finally:
-            if isinstance(self.result, TriggerFlowResult):
-                self._stage.close()
-        """
+            self._stage.ensure_responses()
