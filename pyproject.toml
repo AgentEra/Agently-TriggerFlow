@@ -1,6 +1,6 @@
 [project]
 name = "agently-triggerflow"
-version = "0.1.0-preview-20250130"
+version = "0.1.0-preview-20250207"
 description = "Agently TriggerFlow - Arrange GenAI Application Workflow Based On Event-Driven Triggers"
 authors = [
     {name = "Agently Team",email = "developer@agently.tech>"},
@@ -13,7 +13,7 @@ readme = "README.md"
 documentation = "https://github.com/AgentEra/Agently-TriggerFlow/blob/main/README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "agently-stage (==0.2.0a1)"
+    "agently-stage (==0.2.0rc20250206)"
 ]
 keywords = ["agently", "workflow", "triggerflow", "event", "event-driven"]
 exclude = ["examples", "tests"]
