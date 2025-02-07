@@ -21,6 +21,7 @@ class BaseTriggerFlowChunk:
 
     def __init__(self, triggerflow, task=None, *, name=None, from_condition_chunk=None):
         self._triggerflow = triggerflow
+        self._stage = self._triggerflow._stage
         self._dispatch = self._triggerflow._dispatch
         if task is None and name is None:
             raise ValueError("[Agently TriggerFlow] You must provide a task or a name to the chunk.")
@@ -60,23 +61,19 @@ class BaseTriggerFlowChunk:
         if isinstance(events, dict) and len(events) == 1:
             events = events[list(events.keys())[0]]
         self._dispatch.emit(f"Start:{ self._name }", events)
-        with Stage() as stage:
-            #task_stage_func = self._stage.func(self._task)
-            task_stage_func = stage.func(self._task)
-            task_stage_func(events)
-                
-            if type(task_stage_func._response) is StageResponse:
-                def _response_handler():
-                    result = task_stage_func.wait()
+        task_stage_func = self._stage.func(self._task)
+        task_stage_func(events)
+            
+        if type(task_stage_func._response) is StageResponse:
+            def _response_handler():
+                result = task_stage_func.wait()
+                self._dispatch.emit(self._name, result)
+            self._stage.go(_response_handler)
+        elif type(task_stage_func._response) is StageHybridGenerator:
+            def _response_handler():
+                for result in task_stage_func.wait():
                     self._dispatch.emit(self._name, result)
-                #self._stage.go(_response_handler)
-                stage.go(_response_handler)
-            elif type(task_stage_func._response) is StageHybridGenerator:
-                def _response_handler():
-                    for result in task_stage_func.wait():
-                        self._dispatch.emit(self._name, result)
-                #self._stage.go(_response_handler)
-                stage.go(_response_handler)
+            self._stage.go(_response_handler)
     
     def then(self, task=None, *, name=None):
         next_chunk = self._triggerflow.chunk(task, name=name, from_condition_chunk=self._from_condition_chunk)
@@ -154,18 +151,15 @@ class TriggerFlowIfConditionChunk(BaseTriggerFlowChunk):
     def _execute(self, events):
         if isinstance(events, dict) and len(events) == 1:
             events = events[list(events.keys())[0]]
-        with Stage() as stage:
-            #judge_stage_func = self._stage.func(self._condition)
-            judge_stage_func = stage.func(self._condition)
-            def _handle_judgement():
-                judgement = judge_stage_func.wait()
-                if judgement:
-                    self._dispatch.emit(f"{ self._name }:True", events)
-                else:
-                    self._dispatch.emit(f"{ self._name }:False", events)
-            #self._stage.go(_handle_judgement)
-            stage.go(_handle_judgement)
-            judge_stage_func(events)
+        judge_stage_func = self._stage.func(self._condition)
+        def _handle_judgement():
+            judgement = judge_stage_func.wait()
+            if judgement:
+                self._dispatch.emit(f"{ self._name }:True", events)
+            else:
+                self._dispatch.emit(f"{ self._name }:False", events)
+        self._stage.go(_handle_judgement)
+        judge_stage_func(events)
     
     def then(self, task=None, *, name=None):
         next_chunk = self._triggerflow.chunk(task, name=name, from_condition_chunk=self)
