@@ -2,7 +2,8 @@ import threading
 from agently_stage import Tunnel
 
 class TriggerFlowResult:
-    def __init__(self):
+    def __init__(self, name):
+        self.__name__ = name
         self._result = None
         self._result_ready = threading.Event()
         self._is_stop = False
@@ -28,6 +29,9 @@ class TriggerFlowResult:
         self._result = result
         self._result_ready.set()
     
-    def get(self):
-        self._result_ready.wait()
-        return self._result
+    def get(self, timeout=None):
+        self._result_ready.wait(timeout=timeout)
+        if self._result_ready.is_set():
+            return self._result
+        else:
+            raise TimeoutError(f"[Agently TriggerFlow] '{ self.__name__ }' is not ready or was never been set.")
