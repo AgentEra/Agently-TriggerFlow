@@ -93,12 +93,12 @@ class TriggerFlowDispatch:
     
     def emit(self, event, data=None):
         if self._triggerflow._is_debug:
-            print(self._triggerflow, "EVENT:", event, "DATA:", data)
+            print(self._triggerflow.__name__, "EVENT:", event, "DATA:", data)
         # Single
         if event in self._signals["single"]:
             for then in self._signals["single"][event]:
                 if self._triggerflow._is_debug:
-                    print(self._triggerflow, "[Single]" , "EXECUTE:", then._name)
+                    print(self._triggerflow.__name__, "[Single]" , "EXECUTE:", then._name)
                 self._triggerflow.chunk(then)._execute({ event: data })
         # Group
         for events, events_info in self._signals["group"].items():
@@ -115,7 +115,7 @@ class TriggerFlowDispatch:
                     event_values.update({ event: value.pop(0) })
                 for then in events_info["then"]:
                     if self._triggerflow._is_debug:
-                        print(self._triggerflow, "[Group]" , "EXECUTE:", then._name)
+                        print(self._triggerflow.__name__, "[Group]" , "EXECUTE:", then._name)
                     self._triggerflow.chunk(then)._execute(event_values)
         # Update
         for events, events_info in self._signals["update"].items():
@@ -131,14 +131,14 @@ class TriggerFlowDispatch:
             if events_info["ready"]:
                 for then in events_info["then"]:
                     if self._triggerflow._is_debug:
-                        print(self._triggerflow, "[Update]" , "EXECUTE:", then._name)
+                        print(self._triggerflow.__name__, "[Update]" , "EXECUTE:", then._name)
                     self._triggerflow.chunk(then)._execute(events_info["event_values"])
         # Continue
         if event in self._signals["continue"]:
             if data is StopIteration:
                 for then in self._signals["continue"][event]["then"]:
                     if self._triggerflow._is_debug:
-                        print(self._triggerflow, "[Continue]", "EXECUTE:", then._name)
+                        print(self._triggerflow.__name__, "[Continue]", "EXECUTE:", then._name)
                     self._triggerflow.chunk(then)._execute(self._signals["continue"][event]["results"])
             else:
                 self._signals["continue"][event]["results"].append(data)
