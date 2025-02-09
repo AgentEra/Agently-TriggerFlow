@@ -28,8 +28,10 @@ class TriggerFlow:
     def __init__(
             self,
             name=None,
+            reuse_env=False,
             max_workers=None,
             exception_handler=None,
+            is_daemon=True,
             is_debug=False,
         ):
         """
@@ -84,14 +86,17 @@ class TriggerFlow:
             TriggerFlow._name_counter += 1
             self.__name__ = f"TriggerFlow-{ TriggerFlow._name_counter }"
         self._stage = Stage(
+            reuse_env=reuse_env,
             max_workers=max_workers,
             exception_handler=exception_handler,
+            is_daemon=is_daemon,
         )
         self._dispatch = TriggerFlowDispatch(self)
         self.data = TriggerFlowRuntimeData(self)
         self._chunk_schemas = {}
         self._start_chunk = None
         self._id_counter = {}
+        self.emit = self._dispatch.emit
         self.wait_all = self.wait_group
         self.result = TriggerFlowResult(name=f"Result:{ self.__name__ }")
         self.END = TriggerFlowTaskChunk(
